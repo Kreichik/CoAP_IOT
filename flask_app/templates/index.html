@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Графики с датчиков</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.js"></script>
+</head>
+<body>
+    <h2>Данные с датчиков в реальном времени</h2>
+    <canvas id="sensorChart"></canvas>
+
+    <script>
+        var ctx = document.getElementById('sensorChart').getContext('2d');
+        var sensorChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    { label: 'Sensor 1', borderColor: 'red', data: [] },
+                    { label: 'Sensor 2', borderColor: 'blue', data: [] },
+                    { label: 'Sensor 3', borderColor: 'green', data: [] },
+                    { label: 'Sensor 4', borderColor: 'orange', data: [] },
+                    { label: 'Sensor 5', borderColor: 'purple', data: [] }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: { title: { display: true, text: 'Время' } },
+                    y: { title: { display: true, text: 'Значения' } }
+                }
+            }
+        });
+
+        var socket = io.connect('http://' + document.domain + ':' + location.port);
+
+        socket.on('update_chart', function(data) {
+            var time = data.timestamp;
+            sensorChart.data.labels.push(time);
+            sensorChart.data.datasets[0].data.push(data.sensor1);
+            sensorChart.data.datasets[1].data.push(data.sensor2);
+            sensorChart.data.datasets[2].data.push(data.sensor3);
+            sensorChart.data.datasets[3].data.push(data.sensor4);
+            sensorChart.data.datasets[4].data.push(data.sensor5);
+
+            if (sensorChart.data.labels.length > 10) { // Ограничиваем количество точек
+                sensorChart.data.labels.shift();
+                sensorChart.data.datasets.forEach(dataset => dataset.data.shift());
+            }
+
+            sensorChart.update();
+        });
+    </script>
+</body>
+</html>

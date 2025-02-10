@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="SshConfigs">
+    <configs>
+      <sshConfig authType="PASSWORD" host="10.1.10.144" id="1a0654be-2084-4bab-a421-6ce285b5c3a2" port="22" nameFormat="DESCRIPTIVE" username="iot" useOpenSSHConfig="true" />
+    </configs>
+  </component>
+</project>
