@@ -1,36 +1,54 @@
 #!/usr/bin/env python3
-import asyncio
-import aiocoap
-import json
+from flask import Flask, request, jsonify
+import csv
+import datetime
+import os
+
+app = Flask(__name__)
+
+CSV_FILENAME = "sensor_data.csv"
+SENSOR_KEYS = ["sensor1", "sensor2", "sensor3", "sensor4", "sensor5"]
+
+# Если файла CSV нет, создаем его и записываем заголовок (первая строка)
+if not os.path.exists(CSV_FILENAME):
+    with open(CSV_FILENAME, 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        header = ["timestamp"] + SENSOR_KEYS
+        writer.writerow(header)
 
 
-async def send_sensor_data():
-    # Подготовка данных с 5 датчиков (пример значений)
-    sensor_data = {
-        "sensor1": 100,
-        "sensor2": 500,
+@app.route('/sensor/data', methods=['POST'])
+def receive_sensor_data():
+    """
+    Ожидается JSON формата:
+    {
+        "sensor1": 25.3,
+        "sensor2": 40.2,
         "sensor3": 1013,
         "sensor4": 55.6,
         "sensor5": 12.0
     }
-    payload = json.dumps(sensor_data).encode('utf-8')
-
-    # Задайте IP-адрес сервера в локальной сети
-    # Например, если сервер имеет IP 192.168.1.100:
-    uri = "coap://10.1.10.144:5683/sensor/data"
-
-    request = aiocoap.Message(code=aiocoap.POST, payload=payload, uri=uri)
-
-    # Создаем контекст клиента
-    protocol = await aiocoap.Context.create_client_context()
-
+    """
     try:
-        response = await protocol.request(request).response
-        print("Код ответа:", response.code)
-        print("Ответ сервера:", response.payload.decode('utf-8'))
+        data = request.json  # Получаем JSON-данные
+        if not data:
+            return jsonify({"error": "Empty request"}), 400
+
+        timestamp = datetime.datetime.now().isoformat()
+        row = [timestamp] + [data.get(key, "") for key in SENSOR_KEYS]
+
+        # Записываем в CSV
+        with open(CSV_FILENAME, 'a', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(row)
+
+        print(f"Приняты данные: {row}")
+        return jsonify({"message": "Data stored"}), 201
+
     except Exception as e:
-        print("Ошибка отправки запроса:", e)
+        print(f"Ошибка: {e}")
+        return jsonify({"error": "Failed to process request"}), 500
 
 
 if __name__ == '__main__':
-    asyncio.get_event_loop().run_until_complete(send_sensor_data())
+    app.run(host='0.0.0.0', port=5000, debug=True)
