@@ -172,5 +172,45 @@ def get_data():
     return jsonify(data)
 
 
+@app.route('/monitor')
+def monitor():
+    current_date = datetime.datetime.now().strftime("%Y-%m-%d")
+    csv_filename = f'{data_folder}/{current_date}.csv'
+
+    if not os.path.isfile(csv_filename):
+        return "No data available", 404
+
+    last_row = None
+    with open(csv_filename, 'r') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            last_row = row
+
+    if last_row is None:
+        return "No data available", 404
+
+    return render_template('monitor.html', data=last_row)
+
+
+@app.route('/monitor-data')
+def monitor_data():
+    current_date = datetime.datetime.now().strftime("%Y-%m-%d")
+    csv_filename = f'{data_folder}/{current_date}.csv'
+
+    if not os.path.isfile(csv_filename):
+        return jsonify({"error": "No data available"}), 404
+
+    last_row = None
+    with open(csv_filename, 'r') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            last_row = row
+
+    if last_row is None:
+        return jsonify({"error": "No data available"}), 404
+
+    return jsonify(last_row)
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

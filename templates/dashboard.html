@@ -116,7 +116,7 @@
                             percentColors: [
                                 [0.0, "#1e90ff"],
                                 [0.6, "#ffff00"],
-                                [0.65, "#32cd32"],
+                                [0.70, "#32cd32"],
                                 [1.0, "#ff6347"]
                             ]
                         });
@@ -243,7 +243,7 @@
                     // Update Light Level Indicator and Value
                     const lightIndicator = document.getElementById('lightIndicator');
                     const lightValue = document.getElementById('lightValue');
-                    lightIndicator.src = data.light_level < 2
+                    lightIndicator.src = data.light_level < 1
                         ? "{{ url_for('static', filename='off.png') }}"
                         : "{{ url_for('static', filename='on.png') }}";
                     lightValue.innerText = 'Light Level: ' + data.light_level.toFixed(2) + ' lm';
