@@ -5,6 +5,7 @@ import datetime
 import os
 import threading
 from flask import send_file
+import requests
 app = Flask(__name__)
 
 data_folder = 'box_data'
@@ -14,6 +15,29 @@ EXPECTED_DEVICES = ["esp1", "esp2"]
 # Буфер для хранения временных данных от ESP
 sensor_data_buffer = {}
 buffer_lock = threading.Lock()  # Блокировка для работы с буфером
+
+lat = 51.09103211521735
+lon = 71.41825457825051
+
+
+url = (
+    "https://api.open-meteo.com/v1/forecast"
+    f"?latitude={lat}&longitude={lon}"
+    "&current_weather=true"
+)
+
+response_weather = requests.get(url)
+
+if response_weather.status_code == 200:
+    data = response_weather.json()
+    current = data.get("current_weather", {})
+    print("Температура:", current.get("temperature"), "°C")
+    print("Скорость ветра:", current.get("windspeed"), "км/ч")
+    print("Направление ветра:", current.get("winddirection"), "°")
+    print("Погодный код (weathercode):", current.get("weathercode"))
+    print("Время измерения:", current.get("time"))
+else:
+    print("Ошибка при запросе:", response_weather.status_code)
 
 # Убедитесь, что папка существует
 os.makedirs('box_data', exist_ok=True)
@@ -128,8 +152,18 @@ def get_firmware_status():
 def dashboard():
     return render_template('dashboard.html')
 
+@app.route('/dashboard-new')
+def new_dashboard():
+    return render_template('new_dashboard.html')
+
 @app.route('/data')
 def get_data():
+    response_weather = requests.get(url)
+
+    if response_weather.status_code == 200:
+        data = response_weather.json()
+        current = data.get("current_weather", {})
+
     current_date = datetime.datetime.now().strftime("%Y-%m-%d")
     csv_filename = f'{data_folder}/{current_date}.csv'
 
@@ -137,7 +171,7 @@ def get_data():
         return jsonify({"error": "No data available"}), 404
 
     # Calculate the time threshold for 15 minutes ago
-    fifteen_minutes_ago = datetime.datetime.now() - datetime.timedelta(minutes=15)
+    fifteen_minutes_ago = datetime.datetime.now() - datetime.timedelta(minutes=5)
 
     humidity_data = []
     last_row = None
@@ -166,7 +200,8 @@ def get_data():
         "air_temperature": float(last_row["air_temperature"]) if last_row["air_temperature"] else 0,
         "air_humidity": float(last_row["air_humidity"]) if last_row["air_humidity"] else 0,
         "light_level": float(last_row["light_level"]) if last_row["light_level"] else 0,
-        "humidity_data": humidity_data
+        "humidity_data": humidity_data,
+        "weather_temp": current.get("temperature"),
     }
 
     return jsonify(data)
