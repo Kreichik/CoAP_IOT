@@ -722,7 +722,7 @@
     <div class="grid-item item4">
         <div class="content">
             <img src="{{ url_for('static', filename='clear 1.png') }}" alt="Weather Icon">
-            <span id="weather-status">--°C</span>
+            <span id="weather-status">20°C</span>
         </div>
     </div>
 
@@ -744,15 +744,15 @@
                     <div class="gauge__fill" id="gauge-fill"></div>
                     <div class="gauge__cover"></div>
                 </div>
-                <div class="gauge__value" id="gauge-value">--°C</div>
+                <div class="gauge__value" id="gauge-value">25°C</div>
             </div>
         </div>
     </div>
     <div class="grid-item item8">
         <div class="title">Light level</div>
         <div class="content">
-            <span style="white-space: pre-line;" id="light-value">--<br>lm</span>
-            <img src="{{ url_for('static', filename='on.png') }}" alt="Lightbulb Icon">
+            <span style="white-space: pre-line;" id="light-value">4<br>lm</span>
+            <img  id="lightIndicator" src="{{ url_for('static', filename='on.png') }}" alt="Lightbulb Icon">
         </div>
     </div>
 
@@ -972,7 +972,7 @@
 </div>
 
 <footer class="app-footer">
-    Last updated 20.3.2025, 4:00 PM
+    Last updated 10.4.2025, 17:03
 </footer>
 
 <script>
@@ -1004,7 +1004,7 @@
     humisityChartupdater = new Chart(ctxHumidity, {
         type: 'line',
         data: {
-            labels: ['01PM', '02PM', '03PM', '04PM', '05PM', '06PM'],
+            labels: ['12', '13', '14', '15', '16', '17'],
             datasets: [{
                 label: 'Humidity %',
                 data: [45, 48, 52, 55, 53, 58],
@@ -1027,10 +1027,10 @@
         }
     });
     const ctxTemperature = document.getElementById('temperatureChart').getContext('2d');
-    new Chart(ctxTemperature, {
+    temperatureChartupdater = new Chart(ctxTemperature, {
         type: 'line',
         data: {
-            labels: ['01PM', '02PM', '03PM', '04PM', '05PM', '06PM'],
+            labels: ['12', '13', '14', '15', '16', '17'],
             datasets: [{
                 label: 'Temperature °C',
                 data: [22, 23, 24, 24.5, 24, 25],
@@ -1048,7 +1048,7 @@
             ...defaultChartOptions,
             scales: {
                 x: {...defaultChartOptions.scales.x},
-                y: {...defaultChartOptions.scales.y, suggestedMin: 15, suggestedMax: 30}
+                y: {...defaultChartOptions.scales.y, suggestedMin: 30, suggestedMax: 80}
             }
         }
     });
@@ -1135,7 +1135,7 @@
             labels: ['Shelf 1', 'Shelf 2', 'Shelf 3', 'Shelf 4', 'Shelf 5'], // Static labels
             datasets: [{
                 label: 'Moisture %',
-                data: [0, 0, 0, 0, 0], // Initial empty data
+                data: [80, 70, 90, 75, 85], // Initial empty data
                 backgroundColor: chartColor,
                 borderColor: chartColor,
                 borderWidth: 1,
@@ -1275,10 +1275,10 @@
     }
 
     // // --- Установи здесь нужную температуру ---
-    // const currentTemperature = 25; // Попробуй разные значения: 10, 18, 24, 25, 28, 40
+    const currentTemperature = 25; // Попробуй разные значения: 10, 18, 24, 25, 28, 40
     // // ----------------------------------------
     //
-    // setTemperature(currentTemperature);
+    setTemperature(currentTemperature);
 
 
     // === Video Switching Logic ===
@@ -1334,6 +1334,63 @@
                 ];
                 substrateMoistureChart.update();
                 weatherValueText.textContent = `${data.weather_temp}°C`
+                if (temperatureChartupdater) {
+                        // Clear existing data
+                        temperatureChartupdater.data.labels = [];
+                        temperatureChartupdater.data.datasets[0].data = [];
+
+                        // Add new data points
+                        data.temperature_data.forEach(point => {
+                            const date = new Date(point.timestamp);
+                            const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                            temperatureChartupdater.data.labels.push(time);
+                            temperatureChartupdater.data.datasets[0].data.push(point.air_temperature);
+                        });
+
+                        temperatureChartupdater.update();
+                    }
+                else {
+                        const ctx = document.getElementById('temperatureChart').getContext('2d');
+                        temperatureChartupdater = new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                labels: data.temperature_data.map(point => {
+                                    const date = new Date(point.timestamp);
+                                    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                                }),
+                                datasets: [{
+                                    label: 'Humidity',
+                                    data: data.temperature_data.map(point => point.air_temperature),
+                                    borderColor: 'rgba(75, 192, 192, 1)',
+                                    borderWidth: 1,
+                                    fill: false
+                                }]
+                            },
+                            options: {
+                                scales: {
+                                    y: {
+                                        beginAtZero: false,
+                                        min: 10,
+                                        ticks: {
+                                            color: '#e0e0e0'
+                                        }
+                                    },
+                                    x: {
+                                        ticks: {
+                                            color: '#e0e0e0'
+                                        }
+                                    }
+                                },
+                                plugins: {
+                                    legend: {
+                                        labels: {
+                                            color: '#e0e0e0'
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    }
                 if (humisityChartupdater) {
                         // Clear existing data
                         humisityChartupdater.data.labels = [];
@@ -1348,7 +1405,8 @@
                         });
 
                         humisityChartupdater.update();
-                    } else {
+                    }
+                else {
                         const ctx = document.getElementById('humidityChart').getContext('2d');
                         humisityChartupdater = new Chart(ctx, {
                             type: 'line',
@@ -1390,7 +1448,11 @@
                             }
                         });
                     }
-            })
+            const lightIndicator = document.getElementById('lightIndicator');
+                    lightIndicator.src = data.light_level < 1
+                        ? "{{ url_for('static', filename='off.png') }}"
+                        : "{{ url_for('static', filename='on.png') }}";}
+            )
             .catch(error => console.error('Error fetching data:', error));
     }
 

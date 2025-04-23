@@ -174,6 +174,7 @@ def get_data():
     fifteen_minutes_ago = datetime.datetime.now() - datetime.timedelta(minutes=5)
 
     humidity_data = []
+    temperature_data = []
     last_row = None
 
     with open(csv_filename, 'r') as csvfile:
@@ -185,6 +186,10 @@ def get_data():
                 humidity_data.append({
                     "timestamp": row["timestamp"],
                     "air_humidity": float(row["air_humidity"]) if row["air_humidity"] else 0
+                })
+                temperature_data.append({
+                    "timestamp": row["timestamp"],
+                    "air_temperature": float(row["air_temperature"]) if row["air_temperature"] else 0
                 })
             last_row = row
 
@@ -201,6 +206,7 @@ def get_data():
         "air_humidity": float(last_row["air_humidity"]) if last_row["air_humidity"] else 0,
         "light_level": float(last_row["light_level"]) if last_row["light_level"] else 0,
         "humidity_data": humidity_data,
+        "temperature_data": temperature_data,
         "weather_temp": current.get("temperature"),
     }
 
@@ -245,6 +251,10 @@ def monitor_data():
         return jsonify({"error": "No data available"}), 404
 
     return jsonify(last_row)
+
+@app.route('/data-status')
+def data_status():
+    return jsonify({"message": True})
 
 
 if __name__ == '__main__':
