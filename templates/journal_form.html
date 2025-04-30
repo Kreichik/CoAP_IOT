@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Journal Form</title>
+ <script src="{{ url_for('static', filename='auth.js') }}"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: monospace;
+      background-color: #121212;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      background-color: #121212;
+      padding: 10px;
+      box-sizing: border-box;
+      justify-content: space-between;
+    }
+
+    .burger-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 20px;
+      width: 25px;
+      padding: 0;
+    }
+
+    .burger-btn span {
+      display: block;
+      height: 3px;
+      background: white;
+      border-radius: 2px;
+      width: 100%;
+    }
+
+    h1 {
+      font-weight: lighter;
+      margin-block-start: 0;
+      margin-block-end: 0.22em;
+    }
+
+    
+    .user-bar {
+        display: flex;
+        align-items: center;
+        gap: 2rem; 
+    }
+
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-family: monospace;
+        color: #aaa;
+    }
+
+    .user-info svg {
+      width: 24px;
+      height: 24px;
+    }
+
+    .page-title {
+      text-align: center;
+      font-size: 24px;
+      margin-top: 60px;
+      margin-bottom: 15px;
+    }
+
+    .form-container {
+      background-color: #1e1e1e;
+      padding: 40px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      width: 520px;
+      color: #aaa;
+    }
+
+    .form-group {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+
+    .form-group label {
+      flex-basis: 100px;
+      text-align: left;
+      margin-right: 30px;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group .radio-group {
+      flex-grow: 1;
+      padding: 14px;
+      border: none;
+      border-radius: 14px;
+      background-color: #121212;
+      color: #aaa;
+      font-family: monospace;
+      font-style: italic;
+      width: 100px;
+    }
+
+    .form-group input,
+    .form-group textarea {
+        width: 100%; 
+    }
+
+
+    .form-group .radio-group {
+        display: flex;
+        gap: 25px;
+        padding: 0;
+        background: none;
+        justify-content: center;
+        width: auto; 
+    }
+
+
+    .form-group .radio-group label {
+      margin-right: 0;
+      flex: none;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      /* gap: 10px; */
+    }
+
+    .form-grid .form-group label {
+      flex-basis: 150px;
+    }
+
+    .radio-inline {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      flex-wrap: nowrap;
+    }
+    
+    .radio-inline label {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .save-btn {
+      background-color: #2d8a99;
+      border: none;
+      padding: 15px 80px;
+      border-radius: 19px;
+      color: black;
+      font-family: monospace;
+      font-weight: bold;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 5px rgba(0,0,0,0.7);
+      margin: auto;
+      margin-top: 30px;
+    }
+
+    .save-btn:hover {
+      background-color: #246b77;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="user-bar">
+        <button class="burger-btn" aria-label="Open menu">
+          <span></span><span></span><span></span>
+        </button>
+        <div class="user-info">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="white" viewBox="0 0 24 24">
+            <path d="M12 2C9.24 2 7 4.24 7 7s2.24 5 5 5 5-2.24 5-5S14.76 2 12 2zm0 14c-4.33 0-8 2.17-8 4v2h16v-2c0-1.83-3.67-4-8-4z"/>
+          </svg>
+          <h3>User User</h3>
+        </div>
+      </div>      
+  </div>
+
+  <div class="page-title">
+    <h1>Journal Form</h1>
+  </div>
+
+  <div class="form-container">
+    <div class="form-group">
+      <label>Date</label>
+      <input type="date" id="date">
+    </div>
+    <div class="form-group">
+    <label>Floor</label>
+      <div class="radio-inline">
+          <label><input type="radio" name="floor" value="1"> 1</label>
+          <label><input type="radio" name="floor" value="2"> 2</label>
+          <label><input type="radio" name="floor" value="3"> 3</label>
+          <label><input type="radio" name="floor" value="4"> 4</label>
+          <label><input type="radio" name="floor" value="5"> 5</label>
+      </div>
+    </div>      
+    <div class="form-group">
+      <label>Plant Name</label>
+      <input type="text" id="plant">
+    </div>
+    <div class="form-group">
+      <label>Growth Stage</label>
+      <input type="text" id="stage">
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Height (cm)</label>
+        <input type="number" id="height">
+      </div>
+      <div class="form-group">
+        <label style="margin-left: 8px;">Leaf Color</label>
+        <input type="text" id="color">
+      </div>
+      <div class="form-group">
+        <label>Humidity (%)</label>
+        <input type="number" id="humidity">
+      </div>
+      <div class="form-group" >
+        <label style="margin-left: 8px;">Temperature (°C)</label>
+        <input type="number" id="temperature">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Notes</label>
+      <textarea id="notes"></textarea>
+    </div>
+    <button class="save-btn" onclick="saveEntry()">Save</button>
+  </div>
+
+  <script>
+  async function saveEntry() {
+    // 1) Собираем значения
+    const date     = document.getElementById('date').value;
+    const floorEl  = document.querySelector('input[name="floor"]:checked');
+    const plant    = document.getElementById('plant').value.trim();
+    const stage    = document.getElementById('stage').value.trim();
+    const height   = document.getElementById('height').value;
+    const color    = document.getElementById('color').value.trim();
+    const humidity = document.getElementById('humidity').value;
+    const temp     = document.getElementById('temperature').value;
+    const notes    = document.getElementById('notes').value.trim();
+
+    // 2) Валидация
+    if (!date || !floorEl || !plant || !stage || !height || !color || !humidity || !temp || !notes) {
+      alert('Пожалуйста, заполните все поля.');
+      return;
+    }
+    const floor = floorEl.value;
+
+    // 3) Читаем токен
+    const token = localStorage.getItem('jwtToken');
+    if (!token) {
+      return window.location.replace('login.html');
+    }
+
+    // 4) Формируем тело запроса
+    const payload = {
+      date,
+      floor: Number(floor),
+      plantName: plant,
+      growthStage: stage,
+      height:   Number(height),
+      leafColor: color,
+      humidity: Number(humidity),
+      temperature: Number(temp),
+      notes
+    };
+
+    try {
+      // 5) Отправляем POST на /plants по новому адресу
+      const res = await fetch('http://10.1.10.144:5000/api/plants', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (res.status === 201) {
+        // 6) Успех — редиректим на history
+        window.location.href = 'history.html';
+      } else if (res.status === 401) {
+        // токен недействителен или истёк
+        localStorage.removeItem('jwtToken');
+        window.location.replace('login.html');
+      } else {
+        const err = await res.json();
+        alert(err.message || 'Ошибка при сохранении записи.');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Сетевая ошибка. Попробуйте снова.');
+    }
+  }
+</script>
+
+</body>
+</html>

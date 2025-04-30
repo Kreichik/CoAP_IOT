@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request,make_response,Response, jsonify, render_template
 import csv
 import datetime
 import os
 import threading
 from flask import send_file
+from flask_cors import CORS
 import requests
+from collections import deque
+
+
 app = Flask(__name__)
 
 data_folder = 'box_data'
@@ -47,6 +51,36 @@ CSV_HEADERS = [
     "soil1", "soil2", "soil3", "soil4", "soil5",
     "water_temperature", "air_temperature", "air_humidity", "light_level"
 ]
+CORS(app, resources={r"/api/*": {"origins": "*"}})
+
+@app.route('/api/<path:path>', methods=['OPTIONS', 'GET', 'POST', 'PUT', 'DELETE'])
+def proxy(path):
+    # 1) Префлайт: отвечаем сами, без обхода на Go
+    if request.method == 'OPTIONS':
+        resp = make_response()
+        resp.headers.update({
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type,Authorization'
+        })
+        return resp
+
+    # 2) Все остальные запросы проксируем на Go
+    url = f'http://10.1.10.144:8080/{path}'
+    resp = requests.request(
+        method=request.method,
+        url=url,
+        headers={k: v for k, v in request.headers if k != 'Host'},
+        json=request.get_json(silent=True)
+    )
+
+    # 3) Убираем хиды, которые не нужны в браузеру
+    excluded = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
+    headers = [(k, v) for k, v in resp.raw.headers.items() if k.lower() not in excluded]
+
+    # 4) Возвращаем ответ Go с кодом и телом
+    return Response(resp.content, resp.status_code, headers)
+
 @app.route('/sensor/data', methods=['POST'])
 def receive_sensor_data():
     global sensor_data_buffer
@@ -167,31 +201,58 @@ def get_data():
     current_date = datetime.datetime.now().strftime("%Y-%m-%d")
     csv_filename = f'{data_folder}/{current_date}.csv'
 
+    csv_filename = f'box_data/2025-04-11.csv'
+
     if not os.path.isfile(csv_filename):
         return jsonify({"error": "No data available"}), 404
 
-    # Calculate the time threshold for 15 minutes ago
-    fifteen_minutes_ago = datetime.datetime.now() - datetime.timedelta(minutes=5)
+    # # Calculate the time threshold for 15 minutes ago
+    # fifteen_minutes_ago = datetime.datetime.now() - datetime.timedelta(minutes=5)
+    #
+    # humidity_data = []
+    # temperature_data = []
+    # last_row = None
+    #
+    # with open(csv_filename, 'r') as csvfile:
+    #     reader = csv.DictReader(csvfile)
+    #     for row in reader:
+    #         # Parse the timestamp and compare with the threshold
+    #         timestamp = datetime.datetime.fromisoformat(row["timestamp"])
+    #         if timestamp >= fifteen_minutes_ago:
+    #             humidity_data.append({
+    #                 "timestamp": row["timestamp"],
+    #                 "air_humidity": float(row["air_humidity"]) if row["air_humidity"] else 0
+    #             })
+    #             temperature_data.append({
+    #                 "timestamp": row["timestamp"],
+    #                 "air_temperature": float(row["air_temperature"]) if row["air_temperature"] else 0
+    #             })
+    #         last_row = row
 
-    humidity_data = []
-    temperature_data = []
-    last_row = None
+
 
     with open(csv_filename, 'r') as csvfile:
         reader = csv.DictReader(csvfile)
-        for row in reader:
-            # Parse the timestamp and compare with the threshold
-            timestamp = datetime.datetime.fromisoformat(row["timestamp"])
-            if timestamp >= fifteen_minutes_ago:
-                humidity_data.append({
-                    "timestamp": row["timestamp"],
-                    "air_humidity": float(row["air_humidity"]) if row["air_humidity"] else 0
-                })
-                temperature_data.append({
-                    "timestamp": row["timestamp"],
-                    "air_temperature": float(row["air_temperature"]) if row["air_temperature"] else 0
-                })
-            last_row = row
+        last_rows = deque(reader, maxlen=60)
+    humidity_data = [
+        {
+            "timestamp": row["timestamp"],
+            "air_humidity": float(row["air_humidity"]) if row["air_humidity"] else 0
+        }
+        for row in last_rows
+    ]
+
+    temperature_data = [
+        {
+            "timestamp": row["timestamp"],
+            "air_temperature": float(row["air_temperature"]) if row["air_temperature"] else 0
+        }
+        for row in last_rows
+    ]
+
+    # Последняя строка для справки
+    last_row = last_rows[-1]
+
 
     if last_row is None:
         return jsonify({"error": "No data available"}), 404
@@ -256,6 +317,17 @@ def monitor_data():
 def data_status():
     return jsonify({"message": True})
 
+@app.route('/login')
+def login_page():
+    return render_template('login_page.html')
+
+@app.route('/journal')
+def journal_form():
+    return render_template('journal_form.html')
+
+@app.route('/history')
+def journal_history():
+    return render_template('journal_history.html')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
